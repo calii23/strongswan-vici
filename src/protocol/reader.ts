@@ -2,12 +2,14 @@ import {ElementType, InboundPacket, PacketType, Section} from './general';
 
 export class ViciReader {
   private cursor: number = 0;
+  private packetEnd: number;
 
   public constructor(private readonly data: Buffer) {
+    this.packetEnd = data.length;
   }
 
   public get remaining(): number {
-    return this.data.length - this.cursor;
+    return this.packetEnd - this.cursor;
   }
 
   public get readBytes(): number {
@@ -22,11 +24,21 @@ export class ViciReader {
       this.cursor -= 4;
       return false;
     }
+    this.packetEnd = this.cursor + length;
     const type: PacketType = this.readUInt8();
+
+    let event: string | undefined = undefined;
+    if (type === PacketType.EVENT) {
+      event = this.readShortString();
+    }
+
+    const payload = this.readSection();
+    this.packetEnd = this.data.length;
 
     return {
       type,
-      payload: this.readSection()
+      event,
+      payload
     };
   }
 

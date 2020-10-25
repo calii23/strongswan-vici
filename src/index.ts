@@ -14,14 +14,18 @@ interface ViciEvents {
 
   connect(): void;
   disconnect(dueError: boolean): void;
-
   idle(): void;
+
+  remoteEvent(event: string, payload: Section): void;
+  subscribe(event: string): void;
+  unsubscribe(event: string): void;
 }
 
 export class Vici extends EventEmitter<ViciEvents> {
   private readonly connectionOptions: NetConnectOpts;
   private connection: Socket | null = null;
   private buffer: Buffer | null = null;
+  private subscribed: Set<string> = new Set();
 
   public constructor(socket: string = 'unix:///var/run/charon.vici', private readonly timeout: number = 5000, private readonly keepAliveFor: number = 10000) {
     super();
@@ -63,7 +67,7 @@ export class Vici extends EventEmitter<ViciEvents> {
         this.emit('disconnect', had_error);
       });
       connection.on('timeout', () => {
-        if (this.connection === connection) {
+        if (this.connection === connection && this.subscribed.size === 0) {
           this.emit('idle');
           this.close();
         }
@@ -133,7 +137,7 @@ export class Vici extends EventEmitter<ViciEvents> {
         nomMappedSpace: parseInt(response.mallinfo.sbrk),
         mappedSpace: parseInt(response.mallinfo.mmap),
         used: parseInt(response.mallinfo.used),
-        free: parseInt(response.mallinfo.free),
+        free: parseInt(response.mallinfo.free)
       }
     };
   }
@@ -159,6 +163,30 @@ export class Vici extends EventEmitter<ViciEvents> {
       throw new Error('This command seems not to be supported by the charon server!');
     }
     return packet.payload as T;
+  }
+
+  public async subscribe(event: string): Promise<void> {
+    await this.sendPacket(PacketType.EVENT_REGISTER, event);
+    const packet = await this.nextPacket(packet => packet.type === PacketType.EVENT_CONFIRM || packet.type === PacketType.EVENT_UNKNOWN);
+    if (packet.type === PacketType.EVENT_UNKNOWN) {
+      throw new Error(`The event ${event} is not supported by the charon server!`);
+    }
+    this.subscribed.add(event);
+    this.emit('subscribe', event);
+  }
+
+  public async unsubscribe(event: string): Promise<boolean> {
+    if (!this.subscribed.has(event)) {
+      return false;
+    }
+    await this.sendPacket(PacketType.EVENT_UNREGISTER, event);
+    const packet = await this.nextPacket(packet => packet.type === PacketType.EVENT_CONFIRM || packet.type === PacketType.EVENT_UNKNOWN);
+    if (packet.type === PacketType.EVENT_UNKNOWN) {
+      return false;
+    }
+    this.subscribed.delete(event);
+    this.emit('unsubscribe', event);
+    return true;
   }
 
   private nextPacket(filter: (packet: InboundPacket) => boolean): Promise<InboundPacket> {
@@ -192,7 +220,7 @@ export class Vici extends EventEmitter<ViciEvents> {
       let packet: InboundPacket | boolean;
 
       while (packet = reader.readPacket()) {
-        this.emit('packet', packet);
+        this.processPacket(packet);
       }
 
       if (reader.readBytes === this.buffer!.byteLength) {
@@ -204,5 +232,17 @@ export class Vici extends EventEmitter<ViciEvents> {
       this.buffer = null;
       this.emit('error', e);
     }
+  }
+
+  private processPacket(packet: InboundPacket): void {
+    this.emit('packet', packet);
+
+    if (packet.type === PacketType.EVENT) {
+      this.processEvent(packet.event!, packet.payload);
+    }
+  }
+
+  private processEvent(event: string, payload: Section) {
+    this.emit('remoteEvent', event, payload);
   }
 }

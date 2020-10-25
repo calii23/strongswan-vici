@@ -20,6 +20,7 @@ export const enum ElementType {
 
 export interface InboundPacket {
   type: PacketType;
+  event?: string;
   payload: Section;
 }
 
