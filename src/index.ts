@@ -1,9 +1,13 @@
 import {createConnection, NetConnectOpts, Socket} from 'net';
 import {parse} from 'url';
 import {EventEmitter} from './event';
+import {InboundPacket, PacketType, Section} from './protocol/general';
+import {ViciWriter} from './protocol/writer';
+import {ViciReader} from './protocol/reader';
 
 interface ViciEvents {
   error(error: Error): void;
+  packet(packet: InboundPacket): void;
 }
 
 export class Vici extends EventEmitter<ViciEvents> {
@@ -19,10 +23,10 @@ export class Vici extends EventEmitter<ViciEvents> {
       if (!url.path) throw new Error('Missing path for unix socket url: ' + socket);
       this.connectionOptions = {path: url.path};
     } else if (url.protocol === 'tcp:') {
-      if (!url.host) throw new Error('Missing host for tcp socket url: ' + socket);
+      if (!url.hostname) throw new Error('Missing host for tcp socket url: ' + socket);
       if (!url.port) throw new Error('Missing host for tcp socket url: ' + socket);
       this.connectionOptions = {
-        host: url.host,
+        host: url.hostname,
         port: Number(url.port)
       };
     } else {
@@ -58,15 +62,12 @@ export class Vici extends EventEmitter<ViciEvents> {
 
       connection.on('data', data => {
         if (this.buffer) {
-          data = Buffer.concat([this.buffer, data]);
-        }
-
-        try {
-          // TODO: decode the packet
-          this.buffer = null;
-        } catch {
+          this.buffer = Buffer.concat([this.buffer, data]);
+        } else {
           this.buffer = data;
         }
+
+        this.processData();
       });
     });
   }
@@ -78,5 +79,30 @@ export class Vici extends EventEmitter<ViciEvents> {
     }
   }
 
-  // TODO: sending packets
+  public sendPacket(type: PacketType, packet: string | Section): void {
+    if (!this.connection) throw new Error('Not connected to API! Invoke connect() before sending a packet.');
+    const writer = new ViciWriter();
+    writer.writePacket(type, packet);
+    this.connection.write(writer.packet);
+  }
+
+  private processData(): void {
+    try {
+      const reader = new ViciReader(this.buffer!);
+      let packet: InboundPacket | boolean;
+
+      while (packet = reader.readPacket()) {
+        this.emit('packet', packet);
+      }
+
+      if (reader.readBytes === this.buffer!.byteLength) {
+        this.buffer = null;
+      } else {
+        this.buffer = this.buffer!.subarray(reader.readBytes);
+      }
+    } catch (e) {
+      this.buffer = null;
+      this.emit('error', e);
+    }
+  }
 }
