@@ -1,0 +1,7 @@
+{
+  "name": "strongswan-vici",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Maximilian Schelbach <maximilian@schelbach.de>",
+  "license": "MIT"
+}
