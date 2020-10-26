@@ -10,12 +10,14 @@ export class ViciWriter {
     return packet;
   }
 
-  public writePacket(type: PacketType, payload: string | Section): void {
+  public writePacket(type: PacketType, payload: (string | Section)[]): void {
     this.writeUInt8(type);
-    if (typeof payload === 'string') {
-      this.writeShortString(payload);
-    } else {
-      this.writeSection(payload);
+    for (const payloadElement of payload) {
+      if (typeof payloadElement === 'string') {
+        this.writeShortString(payloadElement);
+      } else {
+        this.writeSection(payloadElement);
+      }
     }
   }
 

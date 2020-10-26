@@ -92,7 +92,7 @@ export class Vici extends EventEmitter<ViciEvents> {
     }
   }
 
-  public async sendPacket(type: PacketType, packet: string | Section): Promise<void> {
+  public async sendPacket(type: PacketType, ...packet: (string | Section)[]): Promise<void> {
     if (!this.connection) {
       await this.connect();
     }
@@ -156,8 +156,8 @@ export class Vici extends EventEmitter<ViciEvents> {
     }
   }
 
-  public async doCommand<T extends object>(command: string): Promise<T> {
-    await this.sendPacket(PacketType.CMD_REQUEST, command);
+  public async doCommand<T extends object>(command: string, payload?: Section): Promise<T> {
+    await this.sendPacket(PacketType.CMD_REQUEST, command, ...payload ? [payload] : []);
     const packet = await this.nextPacket(packet => packet.type === PacketType.CMD_RESPONSE || packet.type === PacketType.CMD_UNKNOWN);
     if (packet.type === PacketType.CMD_UNKNOWN) {
       throw new Error('This command seems not to be supported by the charon server!');
