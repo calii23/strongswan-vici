@@ -1,4 +1,4 @@
-import {ByPriority, ReloadSettingsStatus, Stats} from '../types';
+import {ByPriority, ControlLogEvent, LogEvent, LogLevel, ReloadSettingsStatus, Stats} from '../types';
 
 export interface VersionResponse {
   daemon: string;
@@ -48,6 +48,18 @@ export interface ReloadSettingsResponse {
   errmsg?: string;
 }
 
+export interface RawControlLogEvent {
+  group: string;
+  level: string;
+  'ikesa-name': string;
+  'ikesa-uniqued': string;
+  msg: string;
+}
+
+export interface RawLogEvent extends RawControlLogEvent {
+  thread: string;
+}
+
 function toByPriority(raw: StatsResponse['queues']): ByPriority {
   return {
     critical: parseInt(raw.critical),
@@ -92,4 +104,28 @@ export function convertReloadSettings(response: ReloadSettingsResponse): ReloadS
   } else {
     return {success};
   }
+}
+
+export function convertControlLog(raw: RawControlLogEvent): ControlLogEvent {
+  const event: ControlLogEvent = {
+    group: raw.group,
+    level: parseInt(raw.level) as LogLevel,
+    message: raw.msg
+  };
+
+  if (raw['ikesa-name']) {
+    event.ikeSa = {
+      name: raw['ikesa-name'],
+      id: raw['ikesa-uniqued']
+    };
+  }
+
+  return event;
+}
+
+export function convertLog(raw: RawLogEvent): LogEvent {
+  return {
+    ...convertControlLog(raw),
+    thread: parseInt(raw.thread)
+  };
 }

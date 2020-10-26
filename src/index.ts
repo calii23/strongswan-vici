@@ -4,8 +4,17 @@ import {EventEmitter} from './event';
 import {InboundPacket, PacketType, Section} from './protocol/general';
 import {ViciWriter} from './protocol/writer';
 import {ViciReader} from './protocol/reader';
-import {ByPriority, ReloadSettingsStatus, Stats, Version} from './types';
-import {ReloadSettingsResponse, StatsResponse} from './protocol/packet';
+import {ControlLogEvent, LogEvent, ReloadSettingsStatus, Stats, Version} from './types';
+import {
+  convertControlLog,
+  convertLog,
+  convertReloadSettings,
+  convertStats,
+  RawControlLogEvent,
+  RawLogEvent,
+  ReloadSettingsResponse,
+  StatsResponse
+} from './protocol/packet';
 
 interface ViciEvents {
   error(error: Error): void;
@@ -19,6 +28,9 @@ interface ViciEvents {
   remoteEvent(event: string, payload: Section): void;
   subscribe(event: string): void;
   unsubscribe(event: string): void;
+
+  log(message: LogEvent): void;
+  controlLog(message: ControlLogEvent): void;
 }
 
 export class Vici extends EventEmitter<ViciEvents> {
@@ -203,5 +215,14 @@ export class Vici extends EventEmitter<ViciEvents> {
 
   private processEvent(event: string, payload: Section) {
     this.emit('remoteEvent', event, payload);
+
+    switch (event) {
+      case 'log':
+        this.emit('log', convertLog(payload as unknown as RawLogEvent));
+        break;
+      case 'control_log':
+        this.emit('controlLog', convertControlLog(payload as unknown as RawControlLogEvent));
+        break;
+    }
   }
 }

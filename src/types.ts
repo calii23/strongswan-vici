@@ -56,3 +56,34 @@ export interface ReloadSettingsStatus {
   success: boolean;
   error?: string;
 }
+
+export type LogLevel = 0 | 1 | 2 | 3 | 4;
+
+export interface ControlLogEvent {
+  /**
+   * subsystem identifier for debug message
+   */
+  group: string;
+  level: LogLevel;
+  ikeSa?: {
+    /**
+     * name of IKE_SA, if log is associated with any
+     */
+    name: string;
+    /**
+     * unique identifier of IKE_A, if log associated with any
+     */
+    id: string;
+  }
+  /**
+   * log message text
+   */
+  message: string;
+}
+
+export interface LogEvent extends ControlLogEvent {
+  /**
+   * numerical thread identifier issuing the log message
+   */
+  thread: number;
+}
