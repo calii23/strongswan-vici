@@ -105,55 +105,14 @@ export class Vici extends EventEmitter<ViciEvents> {
     return this.doCommand<Version>('version');
   }
 
-  public async stats(): Promise<Stats> {
-    const response = await this.doCommand<StatsResponse>('stats');
-
-    const workersByPriority: ByPriority = {
-      critical: parseInt(response.workers.active.critical),
-      high: parseInt(response.workers.active.high),
-      medium: parseInt(response.workers.active.medium),
-      low: parseInt(response.workers.active.low)
-    };
-    const queuesByPriority: ByPriority = {
-      critical: parseInt(response.queues.critical),
-      high: parseInt(response.queues.high),
-      medium: parseInt(response.queues.medium),
-      low: parseInt(response.queues.low)
-    };
-
-    return {
-      runningSince: new Date(response.uptime.since),
-      workers: {
-        total: parseInt(response.workers.total),
-        running: Object.values(workersByPriority).reduce((a, b) => a + b),
-        idle: parseInt(response.workers.idle),
-        activeByPriority: workersByPriority
-      },
-      queues: Object.values(queuesByPriority).reduce((a, b) => a + b),
-      queuesByPriority,
-      ikeSas: parseInt(response.ikesas.total),
-      ikeSasHalfOpen: parseInt(response.ikesas['half-open']),
-      memory: {
-        nomMappedSpace: parseInt(response.mallinfo.sbrk),
-        mappedSpace: parseInt(response.mallinfo.mmap),
-        used: parseInt(response.mallinfo.used),
-        free: parseInt(response.mallinfo.free)
-      }
-    };
+  public stats(): Promise<Stats> {
+    return this.doCommand<StatsResponse>('stats')
+        .then(convertStats);
   }
 
-  public async reloadSettings(): Promise<ReloadSettingsStatus> {
-    const response = await this.doCommand<ReloadSettingsResponse>('reload-settings');
-
-    const success = response.success === 'yes';
-    if (response.errmsg) {
-      return {
-        success,
-        error: response.errmsg
-      };
-    } else {
-      return {success};
-    }
+  public reloadSettings(): Promise<ReloadSettingsStatus> {
+    return this.doCommand<ReloadSettingsResponse>('reload-settings')
+        .then(convertReloadSettings);
   }
 
   public async doCommand<T extends object>(command: string, payload?: Section): Promise<T> {
