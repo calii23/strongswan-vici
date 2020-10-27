@@ -87,3 +87,16 @@ export interface LogEvent extends ControlLogEvent {
    */
   thread: number;
 }
+
+export type EventName =
+    'log'
+    | 'control-log'
+    | 'list-sa'
+    | 'list-policy'
+    | 'list-conn'
+    | 'list-cert'
+    | 'list-authority'
+    | 'ike-updown'
+    | 'ike-rekey'
+    | 'child-updown'
+    | 'child-rekey';

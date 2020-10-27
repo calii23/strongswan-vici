@@ -4,7 +4,7 @@ import {EventEmitter} from './event';
 import {InboundPacket, PacketType, Section} from './protocol/general';
 import {ViciWriter} from './protocol/writer';
 import {ViciReader} from './protocol/reader';
-import {ControlLogEvent, LogEvent, ReloadSettingsStatus, Stats, Version} from './types';
+import {ControlLogEvent, EventName, LogEvent, ReloadSettingsStatus, Stats, Version} from './types';
 import {
   convertControlLog,
   convertLog,
@@ -154,7 +154,7 @@ export class Vici extends EventEmitter<ViciEvents> {
     return packet.payload as T;
   }
 
-  public async subscribe(event: string): Promise<void> {
+  public async subscribe(event: EventName | string): Promise<void> {
     await this.sendPacket(PacketType.EVENT_REGISTER, event);
     const packet = await this.nextPacket(packet => packet.type === PacketType.EVENT_CONFIRM || packet.type === PacketType.EVENT_UNKNOWN);
     if (packet.type === PacketType.EVENT_UNKNOWN) {
@@ -164,7 +164,7 @@ export class Vici extends EventEmitter<ViciEvents> {
     this.emit('subscribe', event);
   }
 
-  public async unsubscribe(event: string): Promise<boolean> {
+  public async unsubscribe(event: EventName | string): Promise<boolean> {
     if (!this.subscribed.has(event)) {
       return false;
     }
