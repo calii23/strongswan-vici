@@ -1,5 +1,8 @@
 import {ByPriority, ControlLogEvent, LogEvent, LogLevel, ReloadSettingsStatus, Stats} from '../types';
 
+export * from './request';
+export * from './response';
+
 export interface VersionResponse {
   daemon: string;
   version: string;

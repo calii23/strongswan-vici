@@ -12,17 +12,73 @@ import {
   convertStats,
   RawChildRekeyEvent,
   RawChildUpdownEvent,
+  RawClearCredsResponse,
   RawControlLogEvent,
+  RawFlushCertsRequest,
+  RawFlushCertsResponse,
+  RawGetAlgorithmsResponse,
+  RawGetAuthoritiesResponse,
+  RawGetConnsResponse,
+  RawGetCountersRequest,
+  RawGetCountersResponse,
+  RawGetKeysResponse,
+  RawGetPoolsRequest,
+  RawGetPoolsResponse,
+  RawGetSharedResponse,
   RawIkeRekeyEvent,
   RawIkeUpdownEvent,
+  RawInitiateRequest,
+  RawInitiateResponse,
+  RawInstallRequest,
+  RawInstallResponse,
+  RawListAuthoritiesRequest,
   RawListAuthorityEvent,
   RawListCertEvent,
+  RawListCertsRequest,
   RawListConnEvent,
+  RawListConnsRequest,
+  RawListPoliciesRequest,
   RawListPolicyEvent,
   RawListSaEvent,
+  RawListSasRequest,
+  RawLoadAuthorityRequest,
+  RawLoadAuthorityResponse,
+  RawLoadCertRequest,
+  RawLoadCertResponse,
+  RawLoadConnRequest,
+  RawLoadConnResponse,
+  RawLoadKeyRequest,
+  RawLoadKeyResponse,
+  RawLoadPoolRequest,
+  RawLoadPoolResponse,
+  RawLoadSharedRequest,
+  RawLoadSharedResponse,
+  RawLoadTokenRequest,
+  RawLoadTokenResponse,
   RawLogEvent,
+  RawRedirectRequest,
+  RawRedirectResponse,
+  RawRekeyRequest,
+  RawRekeyResponse,
+  RawResetCountersRequest,
+  RawResetCountersResponse,
+  RawTerminateRequest,
+  RawTerminateResponse,
+  RawUninstallRequest,
+  RawUninstallResponse,
+  RawUnloadAuthorityRequest,
+  RawUnloadAuthorityResponse,
+  RawUnloadConnRequest,
+  RawUnloadConnResponse,
+  RawUnloadKeyRequest,
+  RawUnloadKeyResponse,
+  RawUnloadPoolRequest,
+  RawUnloadPoolResponse,
+  RawUnloadSharedRequest,
+  RawUnloadSharedResponse,
   ReloadSettingsResponse,
-  StatsResponse
+  StatsResponse,
+  VersionResponse
 } from './protocol/packet';
 
 interface ViciEvents {
@@ -132,26 +188,62 @@ export class Vici extends EventEmitter<ViciEvents> {
   }
 
   public version(): Promise<Version> {
-    return this.doCommand<Version>('version');
+    return this.doCommand('version');
   }
 
   public stats(): Promise<Stats> {
-    return this.doCommand<StatsResponse>('stats')
+    return this.doCommand('stats')
         .then(convertStats);
   }
 
   public reloadSettings(): Promise<ReloadSettingsStatus> {
-    return this.doCommand<ReloadSettingsResponse>('reload-settings')
+    return this.doCommand('reload-settings')
         .then(convertReloadSettings);
   }
 
-  public async doCommand<T extends object>(command: string, payload?: Section): Promise<T> {
-    await this.sendPacket(PacketType.CMD_REQUEST, command, ...payload ? [payload] : []);
+  public doCommand(command: 'version'): Promise<VersionResponse>;
+  public doCommand(command: 'stats'): Promise<StatsResponse>;
+  public doCommand(command: 'reload-settings'): Promise<ReloadSettingsResponse>;
+  public doCommand(command: 'initiate', request: RawInitiateRequest): Promise<RawInitiateResponse>;
+  public doCommand(command: 'terminate', request: RawTerminateRequest): Promise<RawTerminateResponse>;
+  public doCommand(command: 'rekey', request: RawRekeyRequest): Promise<RawRekeyResponse>;
+  public doCommand(command: 'redirect', request: RawRedirectRequest): Promise<RawRedirectResponse>;
+  public doCommand(command: 'install', request: RawInstallRequest): Promise<RawInstallResponse>;
+  public doCommand(command: 'uninstall', request: RawUninstallRequest): Promise<RawUninstallResponse>;
+  public doCommand(command: 'list-sas', request: RawListSasRequest): Promise<void>;
+  public doCommand(command: 'list-policies', request: RawListPoliciesRequest): Promise<void>;
+  public doCommand(command: 'list-conns', request: RawListConnsRequest): Promise<void>;
+  public doCommand(command: 'get-conns'): Promise<RawGetConnsResponse>;
+  public doCommand(command: 'list-certs', request: RawListCertsRequest): Promise<void>;
+  public doCommand(command: 'list-authorities', request: RawListAuthoritiesRequest): Promise<void>;
+  public doCommand(command: 'get-authorities'): Promise<RawGetAuthoritiesResponse>;
+  public doCommand(command: 'load-conn', request: RawLoadConnRequest): Promise<RawLoadConnResponse>;
+  public doCommand(command: 'unload-conn', request: RawUnloadConnRequest): Promise<RawUnloadConnResponse>;
+  public doCommand(command: 'load-cert', request: RawLoadCertRequest): Promise<RawLoadCertResponse>;
+  public doCommand(command: 'load-key', request: RawLoadKeyRequest): Promise<RawLoadKeyResponse>;
+  public doCommand(command: 'unload-key', request: RawUnloadKeyRequest): Promise<RawUnloadKeyResponse>;
+  public doCommand(command: 'get-keys'): Promise<RawGetKeysResponse>;
+  public doCommand(command: 'load-token', request: RawLoadTokenRequest): Promise<RawLoadTokenResponse>;
+  public doCommand(command: 'load-shared', request: RawLoadSharedRequest): Promise<RawLoadSharedResponse>;
+  public doCommand(command: 'unload-shared', request: RawUnloadSharedRequest): Promise<RawUnloadSharedResponse>;
+  public doCommand(command: 'get-shared'): Promise<RawGetSharedResponse>;
+  public doCommand(command: 'flush-certs', request: RawFlushCertsRequest): Promise<RawFlushCertsResponse>;
+  public doCommand(command: 'clear-creds'): Promise<RawClearCredsResponse>;
+  public doCommand(command: 'load-authority', request: RawLoadAuthorityRequest): Promise<RawLoadAuthorityResponse>;
+  public doCommand(command: 'unload-authority', request: RawUnloadAuthorityRequest): Promise<RawUnloadAuthorityResponse>;
+  public doCommand(command: 'load-pool', request: RawLoadPoolRequest): Promise<RawLoadPoolResponse>;
+  public doCommand(command: 'unload-pool', request: RawUnloadPoolRequest): Promise<RawUnloadPoolResponse>;
+  public doCommand(command: 'get-pools', request: RawGetPoolsRequest): Promise<RawGetPoolsResponse>;
+  public doCommand(command: 'get-algorithms'): Promise<RawGetAlgorithmsResponse>;
+  public doCommand(command: 'get-counters', request: RawGetCountersRequest): Promise<RawGetCountersResponse>;
+  public doCommand(command: 'reset-counters', request: RawResetCountersRequest): Promise<RawResetCountersResponse>;
+  public async doCommand(command: string, payload?: object): Promise<object | void> {
+    await this.sendPacket(PacketType.CMD_REQUEST, command, ...payload ? [payload as Section] : []);
     const packet = await this.nextPacket(packet => packet.type === PacketType.CMD_RESPONSE || packet.type === PacketType.CMD_UNKNOWN);
     if (packet.type === PacketType.CMD_UNKNOWN) {
       throw new Error('This command seems not to be supported by the charon server!');
     }
-    return packet.payload as T;
+    return packet.payload;
   }
 
   public async subscribe(event: EventName | string): Promise<void> {
