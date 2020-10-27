@@ -8,8 +8,16 @@
     "dist",
     "types"
   ],
-  "author": "Maximilian Schelbach <maximilian@schelbach.de>",
+  "author": {
+    "name": "Maximilian Schelbach",
+    "email": "maximilian@schelbach.de"
+  },
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jsd0fl1/strongswan-vici"
+  },
+  "homepage": "https://github.com/jsd0fl1/strongswan-vici#readme",
   "scripts": {
     "build": "tsc -b tsconfig.cjs.json tsconfig.esm.json"
   },
