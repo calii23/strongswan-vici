@@ -10,7 +10,16 @@ import {
   convertLog,
   convertReloadSettings,
   convertStats,
+  RawChildRekeyEvent,
+  RawChildUpdownEvent,
   RawControlLogEvent,
+  RawIkeRekeyEvent,
+  RawIkeUpdownEvent,
+  RawListAuthorityEvent,
+  RawListCertEvent,
+  RawListConnEvent,
+  RawListPolicyEvent,
+  RawListSaEvent,
   RawLogEvent,
   ReloadSettingsResponse,
   StatsResponse
@@ -31,6 +40,15 @@ interface ViciEvents {
 
   log(message: LogEvent): void;
   controlLog(message: ControlLogEvent): void;
+  listSa(message: RawListSaEvent): void;
+  listPolicy(message: RawListPolicyEvent): void;
+  listConn(message: RawListConnEvent): void;
+  listCert(message: RawListCertEvent): void;
+  listAuthority(message: RawListAuthorityEvent): void;
+  ikeUpdown(message: RawIkeUpdownEvent): void;
+  ikeRekey(message: RawIkeRekeyEvent): void;
+  childUpdown(message: RawChildUpdownEvent): void;
+  childRekey(message: RawChildRekeyEvent): void;
 }
 
 export class Vici extends EventEmitter<ViciEvents> {
@@ -222,6 +240,33 @@ export class Vici extends EventEmitter<ViciEvents> {
         break;
       case 'control_log':
         this.emit('controlLog', convertControlLog(payload as unknown as RawControlLogEvent));
+        break;
+      case 'list_sa':
+        this.emit('listSa', payload as unknown as RawListSaEvent);
+        break;
+      case 'list_policy':
+        this.emit('listPolicy', payload as RawListPolicyEvent);
+        break;
+      case 'list_conn':
+        this.emit('listConn', payload as unknown as RawListConnEvent);
+        break;
+      case 'list_cert':
+        this.emit('listCert', payload as unknown as RawListCertEvent);
+        break;
+      case 'list_authority':
+        this.emit('listAuthority', payload as RawListAuthorityEvent);
+        break;
+      case 'ike_updown':
+        this.emit('ikeUpdown', payload as RawIkeUpdownEvent);
+        break;
+      case 'ike_rekey':
+        this.emit('ikeRekey', payload as RawIkeRekeyEvent);
+        break;
+      case 'child_updown':
+        this.emit('childUpdown', payload as RawChildUpdownEvent);
+        break;
+      case 'child_rekey':
+        this.emit('childRekey', payload as RawChildRekeyEvent);
         break;
     }
   }
