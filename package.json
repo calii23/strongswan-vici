@@ -6,8 +6,8 @@
   "types": "types/index.d.ts",
   "description": "An implementation for the VICI API for Node.js",
   "files": [
-    "dist",
-    "types"
+    "dist/**/*.js",
+    "types/**/*.d.ts"
   ],
   "author": {
     "name": "Maximilian Schelbach",
