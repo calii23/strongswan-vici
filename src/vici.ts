@@ -79,6 +79,7 @@ import {ViciWriter} from './protocol/writer';
 import {ViciReader} from './protocol/reader';
 import {ControlLogEvent, EventName, LogEvent, ReloadSettingsStatus, Stats, Version} from './types';
 import {convertControlLog, convertLog, convertReloadSettings, convertStats} from './protocol/packet/convert';
+import {noParallel} from './utils';
 
 interface ViciEvents {
   error(error: Error): void;
@@ -112,7 +113,7 @@ export class Vici extends EventEmitter<ViciEvents> {
   private buffer: Buffer | null = null;
   private subscribed: Set<string> = new Set();
 
-  public constructor(socket: string = 'unix:///var/run/charon.vici', private readonly timeout: number = 5000, private readonly keepAliveFor: number = 10000) {
+  public constructor(socket: string = 'unix:///var/run/charon.vici', private readonly timeout: number = 5000, private readonly idleTimeout: number = 10000) {
     super();
     const url = parse(socket);
 
@@ -134,11 +135,12 @@ export class Vici extends EventEmitter<ViciEvents> {
   public connect(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       const connection = createConnection(this.connectionOptions);
-      connection.setTimeout(this.keepAliveFor);
+      connection.setTimeout(this.idleTimeout);
       connection.on('connect', () => {
         this.connection = connection;
         this.emit('connect');
-        resolve();
+        this.subscribeMany(...this.subscribed)
+            .then(() => resolve());
       });
       connection.on('error', err => {
         if (this.connection === connection) {
@@ -172,6 +174,7 @@ export class Vici extends EventEmitter<ViciEvents> {
 
   public close(): void {
     if (this.connection) {
+      this.subscribed.clear();
       this.connection.end();
       this.connection = null;
     }
@@ -236,6 +239,7 @@ export class Vici extends EventEmitter<ViciEvents> {
   public doCommand(command: 'get-algorithms'): Promise<RawGetAlgorithmsResponse>;
   public doCommand(command: 'get-counters', request: RawGetCountersRequest): Promise<RawGetCountersResponse>;
   public doCommand(command: 'reset-counters', request: RawResetCountersRequest): Promise<RawResetCountersResponse>;
+  @noParallel
   public async doCommand(command: string, payload?: object): Promise<object | void> {
     await this.sendPacket(PacketType.CMD_REQUEST, command, ...payload ? [payload as Section] : []);
     const packet = await this.nextPacket(packet => packet.type === PacketType.CMD_RESPONSE || packet.type === PacketType.CMD_UNKNOWN);
@@ -245,6 +249,7 @@ export class Vici extends EventEmitter<ViciEvents> {
     return packet.payload;
   }
 
+  @noParallel
   public async subscribe(event: EventName | string): Promise<void> {
     await this.sendPacket(PacketType.EVENT_REGISTER, event);
     const packet = await this.nextPacket(packet => packet.type === PacketType.EVENT_CONFIRM || packet.type === PacketType.EVENT_UNKNOWN);
@@ -255,6 +260,11 @@ export class Vici extends EventEmitter<ViciEvents> {
     this.emit('subscribe', event);
   }
 
+  public subscribeMany(...events: (EventName | string)[]): Promise<void> {
+    return Promise.all(events.map(event => this.unsubscribe(event))) as Promise<any>;
+  }
+
+  @noParallel
   public async unsubscribe(event: EventName | string): Promise<boolean> {
     if (!this.subscribed.has(event)) {
       return false;
@@ -267,6 +277,11 @@ export class Vici extends EventEmitter<ViciEvents> {
     this.subscribed.delete(event);
     this.emit('unsubscribe', event);
     return true;
+  }
+
+  public unsubscribeAll(): Promise<boolean> {
+    return Promise.all([...this.subscribed].map(event => this.unsubscribe(event)))
+        .then(result => result.every(value => value));
   }
 
   private nextPacket(filter: (packet: InboundPacket) => boolean): Promise<InboundPacket> {

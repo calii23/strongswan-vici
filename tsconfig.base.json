@@ -4,7 +4,10 @@
     "moduleResolution": "Node",
     "strict": true,
     "sourceMap": false,
-    "incremental": true
+    "incremental": true,
+    "experimentalDecorators": true,
+    "downlevelIteration": true,
+    "importHelpers": true
   },
   "include": [
     "src/**/*.ts"
