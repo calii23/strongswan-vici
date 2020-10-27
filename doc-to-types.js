@@ -1,6 +1,9 @@
 // Just a short script to convert the type definitions in the docs into a TypeScript interface
 
-readFromStdin(data => process.stdout.write(toInterface(data)));
+let [,,name = 'RawData', allOptional = 'false'] = process.argv;
+allOptional = allOptional === 'true';
+
+readFromStdin(data => process.stdout.write(toInterface(data, name, allOptional)));
 
 function readFromStdin(callback) {
   let data = '';
@@ -49,9 +52,10 @@ function toTsKeys(key) {
  * @param {string[]} data
  * @param {number} from
  * @param {string[]} extraInterfaces
+ * @param {boolean} allOptional
  * @return {[string, number]}
  */
-function parseSection(data, from, extraInterfaces) {
+function parseSection(data, from, extraInterfaces, allOptional) {
   let i = from;
   let result = '{';
 
@@ -61,6 +65,10 @@ function parseSection(data, from, extraInterfaces) {
     const [key, value] = currentLine.split(/\s*=\s*/, 2);
 
     if (!value) {
+      if (currentLine.startsWith('<') && currentLine.endsWith('>')) {
+        return ['Section', i + 2];
+      }
+
       throw new Error(`Invalid line in section: ${currentLine} (line: ${i + 2})`);
     }
 
@@ -75,12 +83,12 @@ function parseSection(data, from, extraInterfaces) {
       docs = docs.substring(1, docs.length - 1);
       i++;
     } else if (value.startsWith('{')) {
-      const [section, end] = parseSection(data, i + 1, extraInterfaces);
+      const [section, end] = parseSection(data, i + 1, extraInterfaces, allOptional);
       i = end;
       if ((key.endsWith('*') && !key.includes('<')) || tsKeys.length > 1) {
         const interfaceName = 'Raw' + toPascalCase(key.split(',', 2)[0]
             .replace('*', ''));
-        extraInterfaces.push(`interface ${interfaceName} ${section}`);
+        extraInterfaces.push(`export interface ${interfaceName} ${section}`);
         valueType = interfaceName;
 
         if (key.endsWith('*')) {
@@ -100,6 +108,8 @@ function parseSection(data, from, extraInterfaces) {
             .split('|')
             .map(constant => `'${constant}'`)
             .join(' | ');
+      } else if (docs.endsWith('yes or no')) {
+        valueType = `'yes' | 'no'`;
       }
     }
 
@@ -108,7 +118,7 @@ function parseSection(data, from, extraInterfaces) {
         result += `\n/**\n * ${docs}\n */`;
       }
 
-      result += `\n${tsKey}: ${valueType};`;
+      result += `\n${tsKey}${allOptional && !tsKey.includes(':') ? '?' : ''}: ${valueType};`;
     }
   }
 
@@ -119,10 +129,14 @@ function parseSection(data, from, extraInterfaces) {
 
 /**
  * @param {string} data
+ * @param {string} name
+ * @param {boolean} allOptional
  * @return {string}
  */
-function toInterface(data) {
-  const lines = data.split('\n')
+function toInterface(data, name, allOptional = false) {
+  const lines = data
+      .replace(/<[^>]*\n[^>]*>/gm, substring => substring.replace(/\n\s*/gm, ' '))
+      .split('\n')
       .map(value => value.trim())
       .filter(value => value);
 
@@ -130,7 +144,7 @@ function toInterface(data) {
   lines.pop();
 
   const interfaces = [];
-  interfaces.push('interface RawData ' + parseSection(lines, 0, interfaces)[0]);
+  interfaces.push(`export interface ${name} ${parseSection(lines, 0, interfaces, allOptional)[0]}`);
 
   return interfaces.join('\n\n');
 }
