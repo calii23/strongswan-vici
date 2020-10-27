@@ -1,5 +1,3 @@
-import {ControlLogEvent, LogEvent, LogLevel} from '../../types';
-
 export interface RawControlLogEvent {
   group: string;
   level: string;
@@ -528,28 +526,4 @@ export interface RawChildRekeyEvent {
       }
     }
   }
-}
-
-export function convertControlLog(raw: RawControlLogEvent): ControlLogEvent {
-  const event: ControlLogEvent = {
-    group: raw.group,
-    level: parseInt(raw.level) as LogLevel,
-    message: raw.msg
-  };
-
-  if (raw['ikesa-name']) {
-    event.ikeSa = {
-      name: raw['ikesa-name'],
-      id: raw['ikesa-uniqued']
-    };
-  }
-
-  return event;
-}
-
-export function convertLog(raw: RawLogEvent): LogEvent {
-  return {
-    ...convertControlLog(raw),
-    thread: parseInt(raw.thread)
-  };
 }
