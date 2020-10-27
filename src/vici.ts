@@ -266,9 +266,9 @@ export class Vici extends EventEmitter<ViciEvents> {
 
   @noParallel
   public async unsubscribe(event: EventName | string): Promise<boolean> {
-    if (!this.subscribed.has(event)) {
-      return false;
-    }
+    if (!this.subscribed.has(event)) return false;
+    if (!this.connection) return true;
+
     await this.sendPacket(PacketType.EVENT_UNREGISTER, event);
     const packet = await this.nextPacket(packet => packet.type === PacketType.EVENT_CONFIRM || packet.type === PacketType.EVENT_UNKNOWN);
     if (packet.type === PacketType.EVENT_UNKNOWN) {
@@ -276,6 +276,7 @@ export class Vici extends EventEmitter<ViciEvents> {
     }
     this.subscribed.delete(event);
     this.emit('unsubscribe', event);
+
     return true;
   }
 
