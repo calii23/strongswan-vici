@@ -4,6 +4,7 @@
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
   "types": "types/index.d.ts",
+  "description": "An implementation for the VICI API for Node.js",
   "files": [
     "dist",
     "types"
@@ -18,6 +19,15 @@
     "url": "https://github.com/jsd0fl1/strongswan-vici"
   },
   "homepage": "https://github.com/jsd0fl1/strongswan-vici#readme",
+  "bugs": {
+    "url": "https://github.com/jsd0fl1/strongswan-vici/issues"
+  },
+  "keywords": [
+    "vpn",
+    "strongswan",
+    "ipsec",
+    "api"
+  ],
   "scripts": {
     "build": "tsc -b tsconfig.cjs.json tsconfig.esm.json"
   },
