@@ -1,8 +1,8 @@
 import {ByPriority, ControlLogEvent, LogEvent, LogLevel, ReloadSettingsStatus, Stats} from '../../types';
-import {ReloadSettingsResponse, StatsResponse} from './response';
+import {RawStatsResponse, ReloadSettingsResponse} from './response';
 import {RawControlLogEvent, RawLogEvent} from './event';
 
-function toByPriority(raw: StatsResponse['queues']): ByPriority {
+function toByPriority(raw: RawStatsResponse['queues']): ByPriority {
   return {
     critical: parseInt(raw.critical),
     high: parseInt(raw.high),
@@ -11,7 +11,7 @@ function toByPriority(raw: StatsResponse['queues']): ByPriority {
   };
 }
 
-export function convertStats(response: StatsResponse): Stats {
+export function convertStats(response: RawStatsResponse): Stats {
   const workersByPriority = toByPriority(response.workers.active);
   const queuesByPriority = toByPriority(response.queues);
 

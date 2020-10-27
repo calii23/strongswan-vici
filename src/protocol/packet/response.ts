@@ -1,50 +1,134 @@
 import {Section} from '../general';
 
 export interface VersionResponse {
+  /**
+   * IKE daemon name
+   */
   daemon: string;
+  /**
+   * strongSwan version
+   */
   version: string;
+  /**
+   * operating system name
+   */
   sysname: string;
+  /**
+   * operating system release
+   */
   release: string;
+  /**
+   * hardware identifier
+   */
   machine: string;
 }
 
-export interface StatsResponse {
+export interface RawStatsResponse {
   uptime: {
+    /**
+     * relative uptime in human-readable form
+     */
     running: string;
+    /**
+     * absolute startup time
+     */
     since: string;
   };
   workers: {
+    /**
+     * total number of worker threads
+     */
     total: string;
+    /**
+     * worker threads currently idle
+     */
     idle: string;
     active: {
+      /**
+       * threads processing "critical" priority jobs
+       */
       critical: string;
+      /**
+       * threads processing "high" priority jobs
+       */
       high: string;
+      /**
+       * threads processing "medium" priority jobs
+       */
       medium: string;
+      /**
+       * threads processing "low" priority jobs
+       */
       low: string;
     };
   };
   queues: {
+    /**
+     * jobs queued with "critical" priority
+     */
     critical: string;
+    /**
+     * jobs queued with "high" priority
+     */
     high: string;
+    /**
+     * jobs queued with "medium" priority
+     */
     medium: string;
+    /**
+     * jobs queued with "low" priority
+     */
     low: string;
   };
+  /**
+   * number of jobs scheduled for timed execution
+   */
   scheduled: string;
   ikesas: {
+    /**
+     * total number of IKE_SAs active
+     */
     total: string;
+    /**
+     * number of IKE_SAs in half-open state
+     */
     'half-open': string;
   };
+  /**
+   * names of loaded plugins
+   */
   plugins: string[];
+  /**
+   * available with mallinfo() support
+   */
   mallinfo: {
+    /**
+     * non-mmaped space available
+     */
     sbrk: string;
+    /**
+     * mmaped space available
+     */
     mmap: string;
+    /**
+     * total number of bytes used
+     */
     used: string;
+    /**
+     * available but unused bytes
+     */
     free: string;
   };
 }
 
 export interface ReloadSettingsResponse {
-  success: string;
+  /**
+   * yes or no
+   */
+  success: 'yes' | 'no';
+  /**
+   * error string on failure
+   */
   errmsg?: string;
 }
 

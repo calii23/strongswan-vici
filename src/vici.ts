@@ -56,6 +56,7 @@ import {
   RawRekeyResponse,
   RawResetCountersRequest,
   RawResetCountersResponse,
+  RawStatsResponse,
   RawTerminateRequest,
   RawTerminateResponse,
   RawUninstallRequest,
@@ -72,7 +73,6 @@ import {
   RawUnloadSharedResponse,
   ReloadSettingsResponse,
   Section,
-  StatsResponse,
   VersionResponse
 } from './protocol';
 import {ViciWriter} from './protocol/writer';
@@ -204,7 +204,7 @@ export class Vici extends EventEmitter<ViciEvents> {
   }
 
   public doCommand(command: 'version'): Promise<VersionResponse>;
-  public doCommand(command: 'stats'): Promise<StatsResponse>;
+  public doCommand(command: 'stats'): Promise<RawStatsResponse>;
   public doCommand(command: 'reload-settings'): Promise<ReloadSettingsResponse>;
   public doCommand(command: 'initiate', request: RawInitiateRequest): Promise<RawInitiateResponse>;
   public doCommand(command: 'terminate', request: RawTerminateRequest): Promise<RawTerminateResponse>;
