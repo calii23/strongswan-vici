@@ -239,6 +239,8 @@ export class Vici extends EventEmitter<ViciEvents> {
   public doCommand(command: 'get-algorithms'): Promise<RawGetAlgorithmsResponse>;
   public doCommand(command: 'get-counters', request: RawGetCountersRequest): Promise<RawGetCountersResponse>;
   public doCommand(command: 'reset-counters', request: RawResetCountersRequest): Promise<RawResetCountersResponse>;
+  public doCommand(command: string): Promise<Section>;
+  public doCommand(command: string, payload: Section): Promise<Section>;
   @noParallel
   public async doCommand(command: string, payload?: object): Promise<object | void> {
     await this.sendPacket(PacketType.CMD_REQUEST, command, ...payload ? [payload as Section] : []);
@@ -249,8 +251,29 @@ export class Vici extends EventEmitter<ViciEvents> {
     return packet.payload;
   }
 
+  public listSas(): Promise<RawListSaEvent> {
+    return this.processListingEvent('list-sas', 'list-sa');
+  }
+
+  public listPolicies(): Promise<RawListPolicyEvent> {
+    return this.processListingEvent('list-policies', 'list-policy');
+  }
+
+  public listConns(): Promise<RawListConnEvent> {
+    return this.processListingEvent('list-conns', 'list-conn');
+  }
+
+  public listCerts(): Promise<RawListCertEvent> {
+    return this.processListingEvent('list-certs', 'list-cert');
+  }
+
+  public listAuthority(): Promise<RawListAuthorityEvent> {
+    return this.processListingEvent('list-authorities', 'list-authority');
+  }
+
   @noParallel
   public async subscribe(event: EventName | string): Promise<void> {
+    if (this.subscribed.has(event)) return;
     await this.sendPacket(PacketType.EVENT_REGISTER, event);
     const packet = await this.nextPacket(packet => packet.type === PacketType.EVENT_CONFIRM || packet.type === PacketType.EVENT_UNKNOWN);
     if (packet.type === PacketType.EVENT_UNKNOWN) {
@@ -376,5 +399,21 @@ export class Vici extends EventEmitter<ViciEvents> {
         this.emit('childRekey', payload as RawChildRekeyEvent);
         break;
     }
+  }
+
+  private async processListingEvent<T>(command: string, eventName: EventName): Promise<T> {
+    const subscribedBefore = this.subscribed.has(eventName);
+    if (!subscribedBefore) await this.subscribe(eventName);
+    const result: T = {} as T;
+    const listener: (event: string, payload: Section) => void = (event, payload) => {
+      if (event === eventName) {
+        Object.assign(result, payload);
+      }
+    };
+    this.on('remoteEvent', listener);
+    await this.doCommand(command);
+    this.off('remoteEvent', listener);
+    if (!subscribedBefore) await this.unsubscribe(eventName);
+    return result;
   }
 }
