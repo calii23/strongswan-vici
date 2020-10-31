@@ -368,34 +368,34 @@ export class Vici extends EventEmitter<ViciEvents> {
       case 'log':
         this.emit('log', convertLog(payload as unknown as RawLogEvent));
         break;
-      case 'control_log':
+      case 'control-log':
         this.emit('controlLog', convertControlLog(payload as unknown as RawControlLogEvent));
         break;
-      case 'list_sa':
+      case 'list-sa':
         this.emit('listSa', payload as unknown as RawListSaEvent);
         break;
-      case 'list_policy':
+      case 'list-policy':
         this.emit('listPolicy', payload as RawListPolicyEvent);
         break;
-      case 'list_conn':
+      case 'list-conn':
         this.emit('listConn', payload as unknown as RawListConnEvent);
         break;
-      case 'list_cert':
+      case 'list-cert':
         this.emit('listCert', payload as unknown as RawListCertEvent);
         break;
-      case 'list_authority':
+      case 'list-authority':
         this.emit('listAuthority', payload as RawListAuthorityEvent);
         break;
-      case 'ike_updown':
+      case 'ike-updown':
         this.emit('ikeUpdown', payload as RawIkeUpdownEvent);
         break;
-      case 'ike_rekey':
+      case 'ike-rekey':
         this.emit('ikeRekey', payload as RawIkeRekeyEvent);
         break;
-      case 'child_updown':
+      case 'child-updown':
         this.emit('childUpdown', payload as RawChildUpdownEvent);
         break;
-      case 'child_rekey':
+      case 'child-rekey':
         this.emit('childRekey', payload as RawChildRekeyEvent);
         break;
     }
